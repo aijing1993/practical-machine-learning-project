@@ -1,0 +1,69 @@
+---
+title: "Analysis of mtcars data"
+author: "Aijing Gao"
+date: "2015Äê12ÔÂ26ÈÕ"
+output: word_document
+---
+1.Basic understanding of data
+```{r}
+library(ggplot2)
+data("mtcars")
+str(mtcars)
+```
+In conclusion, there are 32 observations on 11 variables
+[, 1]	 mpg	 Miles/(US) gallon
+[, 2]	 cyl	 Number of cylinders
+[, 3]	 disp	 Displacement (cu.in.)
+[, 4]	 hp	 Gross horsepower
+[, 5]	 drat	 Rear axle ratio
+[, 6]	 wt	 Weight (1000 lbs)
+[, 7]	 qsec	 1/4 mile time
+[, 8]	 vs	 V/S
+[, 9]	 am	 Transmission (0 = automatic, 1 = manual)
+[,10]	 gear	 Number of forward gears
+[,11]	 carb	 Number of carburetors
+
+2. To explore which transmission (automatic or manual) is better for MPG, we perform t test under the assumption that the distribution of MPG is normally distributed.
+Hypothesis testing: 
+null hypothesis: there is no difference in MPG when using different transmission methods.
+Alternative hypothesis: there is a difference in MPG when using different transmission methods.
+```{r}
+mtcars$am<-as.factor(mtcars$am);levels(mtcars$am)<-c("at","mt")
+#Compare MPG with two different transmission
+mpg_at<- mtcars[mtcars$am == "at",]$mpg
+mpg_mt <- mtcars[mtcars$am == "mt",]$mpg
+t.test(mpg_at, mpg_mt)
+
+```
+
+As the result indicates, p value=0.001374<0.05, thus we can reject the null hypothesis, there is significant difference in MPG when using different transmission method. Mean of MPG when using automatic transmission is 17.14737, while mean of MPG when using manual transmission is 24.39231. Thus, in conclusion, the manual transmission is better for MPG than automatic transmission (Figure 1).
+
+3. To quantify the MPG difference between automatic and manual transmissions, we perform multivariate linear Regression. 
+```{r}
+fit<-lm(mpg~.,data=mtcars)
+summary(fit)
+
+```
+As we can see that inclusion of all variables doesn't give us a good fitting. So here we choose a best model through step function.
+```{r}
+best<-step(fit,trace=0)
+summary(best)
+```
+The best fitting model includes three varibles: weight, 1/4 mile time and transmission. The coefficient for transmission is 2.9358, thus on average, manual transmission is 2.9 mpg better than automatic transmission (Residual plot is attached as Fig 2).
+
+4. Conclusion
+the manual transmission is better for MPG than automatic transmission, and manual transmission is 2.9 mpg better than automatic transmission when including weight, 1/4 mile time and transmission to generate the best regression model for MPG.
+
+5. Appendix
+Figure 1. Automatic versus Manual Transmission MPG.
+```{r}
+ggplot(mtcars, aes(y=mpg, x=factor(am, labels = c("automatic", "manual")), fill=factor(am)))+geom_boxplot()+xlab("transmission") + ylab("MPG")
+```
+
+Figure 2.Residual plot for the best fit model
+```{r}
+par(mfrow = c(2,2))
+plot(best)
+
+```
+

@@ -1,0 +1,78 @@
+---
+title: "Machine learning of data about personal activity"
+author: "Aijing Gao"
+date: "2015Äê12ÔÂ27ÈÕ"
+output: html_document
+---
+1. Load the training and test data sets from the links and perform proprocessing
+```{r}
+library(ggplot2)
+library(caret)
+library(rpart)
+library(randomForest)
+set.seed(12345)
+pml.training <- read.csv("C:/Users/Administrator.LAHX-20150203QA/Downloads/pml-training.csv",na.strings=c("#DIV/0!"))
+pml.testing <- read.csv("C:/Users/Administrator.LAHX-20150203QA/Downloads/pml-testing.csv",na.strings=c("#DIV/0!"))
+dim(pml.training);dim(pml.testing)
+#Data cleansing (removing irrelavant descriptive variables, columns with all missing values and variance near zero)
+pml.training<-pml.training[,colSums(is.na(pml.training))==0]
+pml.testing<-pml.testing[,colSums(is.na(pml.testing))==0]
+nzvcol <- nearZeroVar(pml.training)
+pml.training <- pml.training[, -nzvcol]
+nzvcol2<-nearZeroVar(pml.testing)
+pml.testing<-pml.testing[,-nzvcol2]
+irrelavant_col <- c("X", "user_name", "raw_timestamp_part_1", "raw_timestamp_part_2","cvtd_timestamp", "new_window", "num_window")
+pml.training<-pml.training[,!names(pml.training)%in%irrelavant_col]
+pml.testing<-pml.testing[,!names(pml.testing)%in%irrelavant_col]
+dim(pml.training);dim(pml.testing)
+```
+The training dataset originally has 19622 observations with 160 variables while the testing dataset has 20 observations with 160 variables. After data cleansing, the training data set and testing data set has 53 variables.
+
+2. Data partitioning of training data sets into a training set (70%) and a cross-validation set (30%).
+```{r}
+pml.training$classe<-factor(pml.training$classe)
+inTrain <- createDataPartition(pml.training$classe, p = 0.7,list=FALSE)
+training<-pml.training[inTrain,]
+crossvalidation<-pml.training[-inTrain,]
+```
+The variable "classe" contains 5 levels: A,B,C,D,E. We could generate frequency of each classe level in training set.
+```{r}
+qplot(training$classe,main="Bar Plot of levels of the variable classe within the Training data set", xlab="classe levels", ylab="Frequency")
+```
+
+3.Model train and prediction
+First, we use random forest as model to make prediction.
+```{r}
+model1<-randomForest(classe~.,data=training,importance=TRUE)
+ptraining <- predict(model1, training)
+print(confusionMatrix(ptraining, training$classe))
+#Cross validation to test accuracy of the random forest model using validation set
+vtraining<-predict(model1,crossvalidation)
+print(confusionMatrix(vtraining,crossvalidation$classe))
+
+```
+The accuracy in using random forest reaches 0.9925 when training the model.
+
+4.prediction of test datasets using random forest
+```{r}
+test<-predict(model1,pml.testing)
+test
+```
+
+5. Submission
+Here we save output to files for posting it to submission page.
+```{r}
+answers <- as.vector(test)
+
+pml_write_files = function(x) {
+    n = length(x)
+    for (i in 1:n) {
+        filename = paste0("problem_id_", i, ".txt")
+        write.table(x[i], file = filename, quote = FALSE, row.names = FALSE, 
+            col.names = FALSE)
+    }
+}
+
+pml_write_files(answers)
+```
+

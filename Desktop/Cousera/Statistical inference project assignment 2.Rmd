@@ -1,0 +1,58 @@
+---
+title: "Analysis of toothgrowth data"
+author: "Aijing Gao"
+date: "2015Äê12ÔÂ25ÈÕ"
+output: word_document
+---
+[1]Basic explantory analysis of ToothGrowth data from datasets
+```{r}
+library(datasets)
+library(ggplot2)
+data(ToothGrowth)
+help("ToothGrowth")
+str(ToothGrowth)
+summary(ToothGrowth)
+```
+This data has 60 observation, three variables
+(1)len(numeric): Tooth length
+(2) supp(factor): Supplement type (VC or OJ).
+(3) dose(numeric): Dose in milligrams/day
+
+[2].Summary of data by comparisons
+```{r}
+#make plot to campare Tooth length with different supplement type for each dosage
+g<-qplot(supp,len,data=ToothGrowth, facets=~dose, main="Tooth growth of guinea pigs by different supplement type in each dose",xlab="Supplement type", ylab="Tooth length") 
+g<-g+geom_boxplot(aes(fill = supp))
+g
+
+```
+
+As we can observe in the plot, the average tooth length increases as the dose increases.
+
+[3].Use confidence intervals and/or hypothesis tests to compare tooth growth by supp and dose
+Hypothesis testing
+(1). Assumption: the variables are independent and identically distributed. Tooth growth follows a normal distribution.
+(2). Null hypothesis for different supplement type: There is no difference in tooth growth when using the supplement OJ and VC.
+Alternative hypothesis: There is a difference in tooth growth when using the supplement OJ and VC.
+
+Null hypothesis for different dose : There is no difference in tooth growth when using different dose.
+Alternative hypothesis: There is a difference in tooth growth when using different dose.
+
+Here we are going to use two-way ANOVA for identifying effects of supplement type and dose on tooth growth
+
+```{r}
+#Perform two-way ANOVA to identify effects of supplement type, dose and their interaction
+ToothGrowth$dose = factor(ToothGrowth$dose, levels=c(0.5,1.0,2.0), labels=c("low","med","high"))
+ToothGrowth$supp=factor(ToothGrowth$supp,levels=c("OJ","VC"))
+replications(len ~ supp+dose+supp:dose, data=ToothGrowth)
+anova<- aov(len ~ supp+dose+supp:dose, data=ToothGrowth)
+summary(anova)
+```
+As the result shows, there are two significant main effects and a significant interaction between dose and supp.
+```{r}
+#Perform post hoc test to do pairwise comparison in different factors
+TukeyHSD(anova)
+```
+
+4. Conclusions
+The above results indicate that different supplement types result in different tooth growth. Different doses of a supplement type also result in different tooth growth.

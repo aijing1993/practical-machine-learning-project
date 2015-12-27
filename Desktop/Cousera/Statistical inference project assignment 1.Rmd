@@ -1,0 +1,59 @@
+---
+title: "Investigate the exponential distribution in R"
+author: "Aijing Gao"
+date: "2015Äê12ÔÂ23ÈÕ"
+output: word_document
+---
+[1]. Show the sample mean and compare it to the theoretical mean of the distribution.
+```{r}
+library(ggplot2)
+library(knitr)
+#Simulating exponential distribution
+set.seed(876)
+nsim=1000;n=40;lambda=0.2
+means=NULL
+for(i in 1:nsim) means=c(means,mean(rexp(n,lambda)))
+hist(means,col="yellow",main="Distribution of Means of 40 Exponentials")
+#Sample means vs Theoretical means
+Sample_mean=mean(means);Theoretical_mean=1/lambda
+print(c(Sample_mean,Theoretical_mean))
+```
+According to the result, sample mean derived from simulation is quite near to theoretical mean.
+
+[2].Show how variable the sample is (via variance) and compare it to the theoretical variance of the distribution
+```{r}
+Sample_variance=var(means)
+Theoretical_variance=((1/lambda)^2)/n
+print(c(Sample_variance,Theoretical_variance))
+```
+According to the above result, sample variance and theoretical variance are nearly equal.
+
+[3].Show that the distribution is approximately normal
+```{r}
+g<-ggplot(data.frame(means),aes(x=means))
+g<-g+geom_histogram(binwidth=0.2,aes(y=..density..),colour="black",fill="blue")
+g<-g+labs(x="means",y="Density")
+g<-g+stat_function(fun=dnorm,args=list(mean=Theoretical_mean, sd=sqrt(Theoretical_variance)),color = "red", size = 1.0)
+g<-g+stat_function(fun=dnorm,args=list(mean=Sample_mean,sd=sqrt(Sample_variance)),color="black",size=1.0)
+g
+```
+Red line indicates the normal distribution of theoretical means, black line indicates the normal distribution of simulating 40 expontentials.
+
+In order to show that the distribution is approximately normal, we could increase our simulating numbers to a large number (10,000).
+```{r}
+set.seed(12345)
+nsim=10000;n=40;lambda=0.2
+#Recalculate
+means=NULL
+for(i in 1:nsim) means=c(means,mean(rexp(n,lambda)))
+Sample_mean=mean(means);Theoretical_mean=1/lambda
+Sample_variance=var(means)
+Theoretical_variance=((1/lambda)^2)/n
+g<-ggplot(data.frame(means),aes(x=means))
+g<-g+geom_histogram(binwidth=0.2,aes(y=..density..),colour="black",fill="blue")
+g<-g+labs(x="means",y="Density")
+g<-g+stat_function(fun=dnorm,args=list(mean=Theoretical_mean, sd=sqrt(Theoretical_variance)),color = "red", size = 1.0)
+g<-g+stat_function(fun=dnorm,args=list(mean=Sample_mean,sd=sqrt(Sample_variance)),color="black",size=1.0)
+g
+```
+As shown above, the simulating exponential distribution becomes quite close to normal distribution.
